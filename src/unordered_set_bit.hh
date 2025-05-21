@@ -40,13 +40,13 @@ namespace internal {
 static constexpr int64_t sentinel_value = -1;
 
 struct data_t {
-  typedef int64_t data_type;
+  typedef int64_t data_type_t;
 
   data_t() : value(0) {}
 
-  data_t(data_type v) : value(v) {}
+  data_t(data_type_t v) : value(v) {}
 
-  data_type value;
+  data_type_t value;
 };
 
 struct ul_prefix_node_chunk_t {
@@ -67,7 +67,7 @@ static_assert(sizeof(ul_prefix_node_chunk_t) <=
 struct alignas(std::hardware_destructive_interference_size) ul_prefix_node_t {
   ul_prefix_node_t() : totalCount(0) {}
 
-  bool addNum(int64_t n) {
+  bool addNum(internal::data_t::data_type_t n) {
     for (ul_prefix_node_chunk_t *ptrChunk = &headChunk; ptrChunk;
          ptrChunk = ptrChunk->ptrNextChunk) {
       auto &numbers = ptrChunk->numbers;
@@ -104,7 +104,7 @@ struct alignas(std::hardware_destructive_interference_size) ul_prefix_node_t {
     }
   }
 
-  int32_t totalCount;
+  size_t totalCount;
   ul_prefix_node_chunk_t headChunk;
 };
 
@@ -151,13 +151,13 @@ class ul_set {
   static constexpr int NUM_BITS_PER_NODE = numBitsPerNode;
 
  public:
-  typedef internal::data_t::data_type key_type;
-  typedef internal::data_t::data_type value_type;
+  typedef internal::data_t::data_type_t key_type;
+  typedef internal::data_t::data_type_t value_type;
 
  public:
   ul_set() : buckets() {}
 
-  bool find(const int64_t num) const {
+  bool find(const key_type num) const {
     const auto &node = buckets.getNode(num & node_t::unitBitMask);
     const internal::ul_prefix_node_t *ptrMinNodeList = &node;
 
@@ -172,7 +172,7 @@ class ul_set {
     const internal::ul_prefix_node_chunk_t *searchChunk =
         ptrMinNodeList->headChunk.ptrNextChunk;
 
-    int64_t num2 = num >> node_t::numBitsPerUnit;
+    key_type num2 = num >> node_t::numBitsPerUnit;
 
     for (int unit_idx = 1, offset = node_t::numNodesPerUnit;
          unit_idx < node_t::numUnits;
@@ -202,8 +202,8 @@ class ul_set {
     return false;
   }
 
-  bool erase(int64_t num) {
-    int64_t num2 = num;
+  bool erase(key_type num) {
+    key_type num2 = num;
 
     for (int unit_idx = 0, offset = 0; unit_idx < node_t::numUnits;
          ++unit_idx, offset += node_t::numNodesPerUnit) {
@@ -229,8 +229,8 @@ class ul_set {
     return true;
   }
 
-  bool insert(int64_t num) {
-    int64_t num2 = num;
+  bool insert(key_type num) {
+    key_type num2 = num;
 
     for (int unit_idx = 0; unit_idx < buckets.numUnits; ++unit_idx) {
       const int digit = num2 & buckets.unitBitMask;
