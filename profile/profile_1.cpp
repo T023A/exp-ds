@@ -111,7 +111,7 @@ void test_dsmap_find() {
   auto& um1 = *ptr_um1;
 
   for (int64_t s : search_data) {
-    int ret = um1.exists(s);
+    bool ret = um1.find(s);
     nh += ret;
     nm += !ret;
   }
@@ -121,7 +121,7 @@ void test_dsmap_erase() {
   auto& um1 = *ptr_um1;
 
   for (int i = 0; i < NUM_ELEMENTS; ++i) {
-    int64_t s = erase_data[i];
+    const int64_t s = erase_data[i];
     ne += um1.erase(s);
   }
 }
@@ -130,11 +130,11 @@ void test_dsmap_insert_find() {
   auto& um1 = *ptr_um1;
 
   for (int i = 0; i < NUM_ELEMENTS; ++i) {
-    int64_t v = ins_data[i];
+    const int64_t v = ins_data[i];
     ni += um1.insert(v);
-    int64_t s = search_data[i];
+    const int64_t s = search_data[i];
 
-    bool ret = um1.exists(s);
+    bool ret = um1.find(s);
     nh += ret;
     nm += !ret;
   }

@@ -32,7 +32,7 @@ SOFTWARE.
 /* usage: typedef ds::ul_set<64,22> ul_set; // you may choose to use more or
  * less bits, more will increase memory usage. ul_set::insert(int64_t)
  * ul_set::erase(int64_t)
- * ul_set::exists(int64_t)
+ * ul_set::find(int64_t)
  * */
 
 namespace ds {
@@ -40,11 +40,13 @@ namespace internal {
 static constexpr int64_t sentinel_value = -1;
 
 struct data_t {
+  typedef int64_t data_type;
+
   data_t() : value(0) {}
 
-  data_t(int v) : value(v) {}
+  data_t(data_type v) : value(v) {}
 
-  int64_t value;
+  data_type value;
 };
 
 struct ul_prefix_node_chunk_t {
@@ -142,14 +144,20 @@ struct ul_layout_t {
 }  // namespace internal
 
 template <int maxBits = 64, int numBitsPerNode = 24>
-struct ul_set {
+class ul_set {
+ private:
   typedef internal::ul_layout_t<maxBits, numBitsPerNode> node_t;
   static constexpr int MAX_BITS = maxBits;
   static constexpr int NUM_BITS_PER_NODE = numBitsPerNode;
 
+ public:
+  typedef internal::data_t::data_type key_type;
+  typedef internal::data_t::data_type value_type;
+
+ public:
   ul_set() : buckets() {}
 
-  bool exists(const int64_t num) {
+  bool find(const int64_t num) const {
     const auto &node = buckets.getNode(num & node_t::unitBitMask);
     const internal::ul_prefix_node_t *ptrMinNodeList = &node;
 
@@ -194,7 +202,7 @@ struct ul_set {
     return false;
   }
 
-  int erase(int64_t num) {
+  bool erase(int64_t num) {
     int64_t num2 = num;
 
     for (int unit_idx = 0, offset = 0; unit_idx < node_t::numUnits;
@@ -213,12 +221,12 @@ struct ul_set {
           }
         }
       }
-      return 0;
+      return false;
     next:
       --nn.totalCount;
     }
   done:
-    return 1;
+    return true;
   }
 
   bool insert(int64_t num) {
@@ -236,6 +244,7 @@ struct ul_set {
     return true;
   }
 
+ private:
   internal::ul_layout_t<maxBits, numBitsPerNode> buckets;
 };
 }  // namespace ds
