@@ -28,6 +28,7 @@ SOFTWARE.
 #define UNORDERED_SET_BIT_IMPL_HH
 
 #include <cstdint>
+#include <memory>
 
 /* usage: typedef ds::ul_set<64,22> ul_set; // you may choose to use more or
  * less bits, more will increase memory usage. ul_set::insert(int64_t)
@@ -50,14 +51,14 @@ struct data_t {
 };
 
 struct ul_prefix_node_chunk_t {
-  ul_prefix_node_chunk_t() : ptrNextChunk(nullptr) {
+  ul_prefix_node_chunk_t() : ptrNextChunk() {
     for (uint8_t i = 0; i < ul_prefix_node_chunk_t::MAX_COUNT; ++i) {
       numbers[i] = sentinel_value;
     }
   }
 
   static constexpr uint8_t MAX_COUNT = 4;  // this can be tuned as well
-  ul_prefix_node_chunk_t *ptrNextChunk;
+  std::unique_ptr<ul_prefix_node_chunk_t> ptrNextChunk;
   int64_t numbers[MAX_COUNT];
 };
 
@@ -69,7 +70,7 @@ struct alignas(std::hardware_destructive_interference_size) ul_prefix_node_t {
 
   bool addNum(internal::data_t::data_type_t n) {
     for (ul_prefix_node_chunk_t *ptrChunk = &headChunk; ptrChunk;
-         ptrChunk = ptrChunk->ptrNextChunk) {
+         ptrChunk = ptrChunk->ptrNextChunk.get()) {
       auto &numbers = ptrChunk->numbers;
 
       for (int i = 0; i < ul_prefix_node_chunk_t::MAX_COUNT; ++i) {
@@ -83,25 +84,14 @@ struct alignas(std::hardware_destructive_interference_size) ul_prefix_node_t {
       }
 
       if (!ptrChunk->ptrNextChunk) {
-        auto *newChunk = new ul_prefix_node_chunk_t();
-        ptrChunk->ptrNextChunk = newChunk;
-        newChunk->numbers[0] = n;
+        ptrChunk->ptrNextChunk.reset(new ul_prefix_node_chunk_t());
+        ptrChunk->ptrNextChunk->numbers[0] = n;
         ++totalCount;
         return true;
       }
     }
 
     return false;
-  }
-
-  ~ul_prefix_node_t() {
-    auto *ptrHeapChunk = headChunk.ptrNextChunk;
-
-    while (ptrHeapChunk) {
-      auto t = ptrHeapChunk->ptrNextChunk;
-      delete (ptrHeapChunk);
-      ptrHeapChunk = t;
-    }
   }
 
   size_t totalCount;
@@ -170,7 +160,7 @@ class ul_set {
     if (!node.headChunk.ptrNextChunk) return false;
 
     const internal::ul_prefix_node_chunk_t *searchChunk =
-        ptrMinNodeList->headChunk.ptrNextChunk;
+        ptrMinNodeList->headChunk.ptrNextChunk.get();
 
     key_type num2 = num >> node_t::numBitsPerUnit;
 
@@ -191,7 +181,7 @@ class ul_set {
     }
 
     for (const internal::ul_prefix_node_chunk_t *ptrChunk = searchChunk;
-         ptrChunk; ptrChunk = ptrChunk->ptrNextChunk) {
+         ptrChunk; ptrChunk = ptrChunk->ptrNextChunk.get()) {
       for (int i = 0; i < internal::ul_prefix_node_chunk_t::MAX_COUNT; ++i) {
         if (ptrChunk->numbers[i] == num) {
           return true;
@@ -211,7 +201,7 @@ class ul_set {
           buckets.getNode(offset + (num2 & node_t::unitBitMask));
 
       for (internal::ul_prefix_node_chunk_t *ptrChunk = &nn.headChunk; ptrChunk;
-           ptrChunk = ptrChunk->ptrNextChunk) {
+           ptrChunk = ptrChunk->ptrNextChunk.get()) {
         auto &nns = ptrChunk->numbers;
         for (int i = 0; i < internal::ul_prefix_node_chunk_t::MAX_COUNT; ++i) {
           if (nns[i] == num) {
