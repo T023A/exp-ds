@@ -1,6 +1,6 @@
 # exp-ds
 This is a repo for experimental data structures.
-- Unordered Hash set - If you have a use case where you only want to insert/find/erase Int64 keys (or hashes) without iterating through all elements, the implementation in the project benchmarks faster for 3 million randomly generted Int64s compared to Abseil- flash hash set; in my tests. The repo has the source implementation for the unordered set and the the profiling code.
+- Unordered  set - If you have a use case where you only want to insert/find/erase Int64 keys (or hashes) without iterating through all elements, the implementation in the project benchmarks faster for 3 million randomly generted Int64s compared to Abseil- flash hash set; in my tests. The repo has the source implementation for the unordered set and the the profiling code.
 
   
 
