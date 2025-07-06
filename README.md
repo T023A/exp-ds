@@ -7,7 +7,7 @@ To build and compare with abseil Hash, clone abseil-cpp (https://github.com/abse
 directory.
 
 
-## Example output -
+## Example output (output CPU cycles) -
 ##### Invoking benchmark for flat hash set 
 `pawan@XYZ:~/unordered_search1/git/exp-ds/build$ ./ds_profile1 7`
 <sub>
